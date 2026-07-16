@@ -1,0 +1,32 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title C2: Контейнерная диаграмма — Автономная архитектура (только edge)
+
+Person(operator, "Оператор фермы", "Управляет локальными устройствами, получает алерты")
+System_Ext(mobile, "Мобильное приложение", "Показывает локальные метрики и алерты")
+
+System_Boundary(edge_system, "Edge-система на ферме") {
+  Container(video_processor, "Видеоаналитика", "Обнаружение драк, болезней, гибели", "Python, OpenCV")
+  Container(device_control, "Управление устройствами", "Кормушки, поилки, фильтры", "Python, MQTT")
+  Container(local_alerting, "Локальный алертинг", "Оповещения на месте", "Python, WebSockets")
+  Container(local_storage, "Локальное хранилище", "Хранение данных, синхронизация", "Python, SQLite")
+}
+
+operator --> local_alerting
+mobile --> local_alerting
+
+video_processor --> device_control : gRPC\n(метаданные о событиях)
+video_processor --> local_alerting : REST\n(алерт о драке/гибели)
+device_control --> local_alerting : REST\n(статус устройств)
+local_alerting --> local_storage : Сохранение событий
+local_storage --> mobile : Показ метрик
+
+System_Ext(cloud_backend, "Облачный backend", "Аналитика, отчёты, SaaS-модель")
+cloud_backend .> local_storage : HTTP POST\n(синхронизация раз в 10 мин)
+
+note right of local_storage
+  Работает полностью автономно.\nОблако используется только для\nаналитики и отчётов.\nНет реального времени.
+end note
+
+@enduml

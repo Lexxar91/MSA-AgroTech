@@ -1,0 +1,41 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title C2: Контейнерная диаграмма — Гибридная архитектура (edge + cloud)
+
+Person(operator, "Оператор фермы", "Наблюдает за системой, получает алерты")
+System_Ext(mobile, "Мобильное приложение", "Показывает метрики, получает уведомления")
+
+System_Boundary(edge_system, "Edge-система на ферме") {
+  Container(video_processor, "Видеоаналитика", "Обнаружение драк, болезней, гибели", "Python, OpenCV")
+  Container(device_control, "Управление устройствами", "Кормушки, поилки, фильтры", "Python, MQTT")
+  Container(local_alerting, "Локальный алертинг", "Оповещения на месте", "Python, WebSockets")
+  Container(queuing, "Локальная очередь и отправка", "Буферизация, доставка в облако", "Python, Pika")
+}
+
+System_Boundary(cloud_system, "Облачный backend") {
+  Container(cloud_mq, "Облачный брокер очередей", "Прием событий со всех ферм", "RabbitMQ")
+  Container(api_gateway, "API Gateway", "Входные точки, REST API", "Python, FastAPI")
+  Container(notification, "Сервис уведомлений", "SMS/Email шлюз", "Python, Twilio")
+  Container(analytics, "Сервис аналитики", "Агрегация данных", "Python, Prometheus")
+  Container(storage, "Хранилище данных", "S3-совместимое", "MinIO")
+}
+
+operator --> local_alerting
+mobile --> api_gateway
+
+video_processor --> device_control : Управление кормушками при драках
+video_processor --> local_alerting : Алерт о событии
+device_control --> queuing : Событие «кормушка заполнена»
+local_alerting --> queuing : Алерт «требуется вмешательство»
+queuing --> cloud_mq : Асинхронная отправка\n(AMQP over SSL/VPN)
+cloud_mq --> api_gateway : Обработка событий
+api_gateway --> notification
+api_gateway --> analytics
+api_gateway --> storage
+
+note right of queuing
+  Работает автономно при\nпотере связи.\nБуферизует события локально.
+end note
+
+@enduml

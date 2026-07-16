@@ -1,0 +1,32 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title C1: Контекстная диаграмма — Гибридная архитектура (edge + cloud)
+
+Person(operator, "Оператор фермы", "Наблюдает за системой, получает алерты")
+Person(admin, "Администратор", "Управляет пользователями, ролями, настройками")
+System_Ext(mobile, "Мобильное приложение", "Получает уведомления, показывает метрики")
+
+System_Boundary(agro_system, "Система мониторинга свиноводческих ферм") {
+    System(cloud_backend, "Облачный backend", "Центральный сервер: API, аналитика, уведомления")
+    System(edge_agent, "Edge-агент на ферме", "Локальная обработка видео, управление устройствами")
+}
+
+System_Ext(cameras, "IP-камеры", "Видеоаналитика в реальном времени")
+System_Ext(sensors_feeders, "Датчики и кормушки", "Состояние воды, еды, управления")
+System_Ext(sms_gateway, "SMS/Email шлюз", "Отправка оповещений")
+
+operator --> edge_agent
+admin --> cloud_backend
+mobile --> cloud_backend
+
+edge_agent --> cameras
+edge_agent --> sensors_feeders
+edge_agent --> cloud_backend : Асинхронные события\n(через очередь)
+cloud_backend --> sms_gateway
+
+note right of edge_agent
+  Работает автономно при\nпотере связи.\nБуферизует события.
+end note
+
+@enduml

@@ -1,0 +1,96 @@
+@startuml
+' C4 Code Level — Альтернативный вариант (автономный)
+
+class VideoIngestor {
+  + start_stream(camera_id: str)
+  + get_frame() -> Frame
+}
+
+class PigDetector {
+  - model: ONNXModel
+  + detect(frame: Frame) -> List[Detection]
+}
+
+class AggressionAnalyzer {
+  + analyze(detections: List[Detection]) -> Event
+}
+
+class EventEmitter {
+  + emit(event: Event)
+}
+
+class DeviceAdapter {
+  <<Interface>>
+  + send_command(cmd: Command) -> Status
+}
+
+class FeederVendorAAdapter {
+  + send_command(cmd: Command) -> Status
+}
+
+class FeederVendorBAdapter {
+  + send_command(cmd: Command) -> Status
+}
+
+class CommandExecutor {
+  + execute(adapter: DeviceAdapter, cmd: Command)
+}
+
+class StatusMonitor {
+  + update_status(device_id: str, status: Status)
+}
+
+class EventPublisher {
+  + publish(event: Event)
+}
+
+class AlertRouter {
+  + route(event: Event)
+}
+
+class SMSNotifier {
+  + send_sms(message: str)
+}
+
+class SoundLightAlert {
+  + trigger_alert()
+}
+
+class DBWriter {
+  - db: SQLiteConnection
+  + save_event(event: Event)
+}
+
+class DBReader {
+  + get_recent_events(limit: int) -> List[Event]
+}
+
+class SyncScheduler {
+  + schedule_sync(interval: int)
+}
+
+class HTTPClient {
+  + send_to_cloud(data: List[Event])
+}
+
+' Зависимости
+VideoIngestor --> PigDetector
+PigDetector --> AggressionAnalyzer
+AggressionAnalyzer --> EventEmitter
+EventEmitter --> DBWriter
+
+FeederVendorAAdapter ..|> DeviceAdapter
+FeederVendorBAdapter ..|> DeviceAdapter
+CommandExecutor --> DeviceAdapter
+CommandExecutor --> StatusMonitor
+StatusMonitor --> EventPublisher
+EventPublisher --> DBWriter
+
+DBReader --> AlertRouter
+AlertRouter --> SMSNotifier
+AlertRouter --> SoundLightAlert
+
+SyncScheduler --> HTTPClient
+HTTPClient --> [cloud_backend]
+
+@enduml

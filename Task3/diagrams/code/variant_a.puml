@@ -1,0 +1,101 @@
+@startuml
+' C4 Code Level — Основной вариант (гибрид)
+
+class VideoIngestor {
+  + start_stream(camera_id: str)
+  + get_frame() -> Frame
+}
+
+class PigDetector {
+  - model: ONNXModel
+  + detect(frame: Frame) -> List[Detection]
+}
+
+class AggressionAnalyzer {
+  + analyze(detections: List[Detection]) -> Event
+}
+
+class EventEmitter {
+  + emit(event: Event)
+}
+
+class DeviceAdapter {
+  <<Interface>>
+  + send_command(cmd: Command) -> Status
+}
+
+class FeederVendorAAdapter {
+  + send_command(cmd: Command) -> Status
+}
+
+class FeederVendorBAdapter {
+  + send_command(cmd: Command) -> Status
+}
+
+class CommandExecutor {
+  + execute(adapter: DeviceAdapter, cmd: Command)
+}
+
+class StatusMonitor {
+  + update_status(device_id: str, status: Status)
+}
+
+class EventPublisher {
+  + publish(event: Event)
+}
+
+class AlertRouter {
+  + route(event: Event)
+}
+
+class SMSNotifier {
+  + send_sms(message: str)
+}
+
+class SoundLightAlert {
+  + trigger_alert()
+}
+
+class EventSubscriber {
+  + subscribe(queue: str)
+}
+
+class QueueManager {
+  - connection: PikaConnection
+  + send_to_queue(event: Event)
+}
+
+class RetryHandler {
+  + retry_failed(event: Event, attempts: int)
+}
+
+class DLQProcessor {
+  + handle_dead_letter(event: Event)
+}
+
+class EventCollector {
+  + collect_from_sources()
+}
+
+' Зависимости
+VideoIngestor --> PigDetector
+PigDetector --> AggressionAnalyzer
+AggressionAnalyzer --> EventEmitter
+EventEmitter --> EventCollector
+
+FeederVendorAAdapter ..|> DeviceAdapter
+FeederVendorBAdapter ..|> DeviceAdapter
+CommandExecutor --> DeviceAdapter
+CommandExecutor --> StatusMonitor
+StatusMonitor --> EventPublisher
+EventPublisher --> EventCollector
+
+EventCollector --> QueueManager
+QueueManager --> RetryHandler
+RetryHandler --> DLQProcessor
+EventSubscriber --> QueueManager
+EventSubscriber --> AlertRouter
+AlertRouter --> SMSNotifier
+AlertRouter --> SoundLightAlert
+
+@enduml

@@ -1,0 +1,33 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title C1: Контекстная диаграмма — Автономная архитектура (только edge)
+
+Person(operator, "Оператор фермы", "Управляет локальными устройствами, получает алерты")
+Person(admin, "Администратор", "Просматривает отчёты и аналитику в облаке")
+
+System_Ext(mobile, "Мобильное приложение", "Показывает локальные метрики и алерты")
+
+System_Boundary(agro_system, "Система мониторинга свиноводческих ферм") {
+    System(edge_agent, "Edge-агент на ферме", "Полная автономная обработка: видеоаналитика, управление устройствами, алерты")
+}
+
+System_Ext(cameras, "IP-камеры", "Видеоаналитика в реальном времени")
+System_Ext(sensors_feeders, "Датчики и кормушки", "Состояние воды, еды, управления")
+System_Ext(sms_gateway, "SMS/Email шлюз", "Отправка локальных алертов")
+
+operator --> edge_agent
+mobile --> edge_agent
+
+edge_agent --> cameras
+edge_agent --> sensors_feeders
+edge_agent --> sms_gateway
+
+System_Ext(cloud_backend, "Облачный backend", "Аналитика, отчёты, SaaS-модель")
+cloud_backend .> edge_agent : Синхронизация\n(раз в 10 минут)
+
+note right of edge_agent
+  Работает полностью автономно.\nОблако используется только для\nаналитики и отчётов.\nНет реального времени.
+end note
+
+@enduml

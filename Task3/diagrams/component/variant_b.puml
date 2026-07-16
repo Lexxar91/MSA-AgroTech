@@ -1,0 +1,51 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title C3: Компонентная диаграмма — Альтернативный вариант (автономный)
+
+Container_Boundary(video_processor, "Видеоаналитика") {
+  Component(video_ingestor, "VideoIngestor", "Получение видео с камер", "Python")
+  Component(pig_detector, "PigDetector", "Обнаружение свиней", "ONNX Runtime")
+  Component(aggression_analyzer, "AggressionAnalyzer", "Анализ поведения", "Python")
+  Component(event_emitter, "EventEmitter", "Отправка событий", "Python")
+}
+
+Container_Boundary(device_control, "Управление устройствами") {
+  Component(device_adapter, "DeviceAdapter", "Адаптеры для производителей", "Python")
+  Component(command_executor, "CommandExecutor", "Выполнение команд", "Python")
+  Component(status_monitor, "StatusMonitor", "Мониторинг состояния", "Python")
+  Component(event_publisher, "EventPublisher", "Публикация событий", "Python")
+}
+
+Container_Boundary(local_alerting, "Локальный алертинг") {
+  Component(alert_router, "AlertRouter", "Маршрутизация алертов", "Python")
+  Component(sms_notifier, "SMSNotifier", "Отправка SMS", "Python, Twilio")
+  Component(sound_light, "SoundLightAlert", "Звук/свет на ферме", "Python")
+  Component(db_reader, "DBReader", "Чтение событий из БД", "Python")
+}
+
+Container_Boundary(local_storage, "Локальное хранилище") {
+  Component(db_writer, "DBWriter", "Запись событий", "Python, SQLite")
+  Component(sync_scheduler, "SyncScheduler", "Планировщик синхронизации", "Python")
+  Component(http_client, "HTTPClient", "Отправка в облако", "Python")
+}
+
+' Внутренние связи
+video_ingestor --> pig_detector
+pig_detector --> aggression_analyzer
+aggression_analyzer --> event_emitter
+event_emitter --> db_writer
+
+device_adapter --> command_executor
+command_executor --> status_monitor
+status_monitor --> event_publisher
+event_publisher --> db_writer
+
+db_reader --> alert_router
+alert_router --> sms_notifier
+alert_router --> sound_light
+
+sync_scheduler --> http_client
+http_client --> [cloud_backend] : HTTP POST\n(раз в 10 мин)
+
+@enduml
