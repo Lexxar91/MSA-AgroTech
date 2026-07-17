@@ -6,6 +6,7 @@ title C3: Компонентная диаграмма — Основной ва�
 Container_Boundary(video_processor, "Видеоаналитика") {
   Component(video_ingestor, "VideoIngestor", "Получение видео с камер", "Python")
   Component(pig_detector, "PigDetector", "Обнаружение свиней", "ONNX Runtime")
+  Component(headcount_counter, "HeadcountCounter", "Пересчёт поголовья по трекингу особей", "Python, ONNX Runtime")
   Component(aggression_analyzer, "AggressionAnalyzer", "Анализ поведения", "Python")
   Component(event_emitter, "EventEmitter", "Отправка событий", "Python")
 }
@@ -34,7 +35,10 @@ Container_Boundary(queuing, "Буферизация и отправка") {
 ' Внутренние связи
 video_ingestor --> pig_detector
 pig_detector --> aggression_analyzer
+pig_detector --> headcount_counter : Трекинг особей
+для пересчёта
 aggression_analyzer --> event_emitter
+headcount_counter --> event_emitter : Событие «поголовье пересчитано»
 
 ' Локальные алерты идут напрямую, минуя очередь
 event_emitter --> alert_router : gRPC (Локальный алерт)

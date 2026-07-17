@@ -23,7 +23,7 @@ local_alerting --> local_storage : Сохранение событий
 local_storage --> mobile : Показ метрик
 
 System_Ext(cloud_backend, "Облачный backend", "Аналитика, отчёты, SaaS-модель")
-cloud_backend .> local_storage : HTTP POST\n(синхронизация раз в 10 мин)
+local_storage ..> cloud_backend : HTTP POST\n(синхронизация раз в 10 мин)
 
 note right of local_storage
   Работает полностью автономно.\nОблако используется только для\nаналитики и отчётов.\nНет реального времени.

@@ -4,6 +4,7 @@
 title C2: Контейнерная диаграмма — Гибридная архитектура (edge + cloud)
 
 Person(operator, "Оператор фермы", "Наблюдает за системой, получает алерты")
+Person(admin, "Администратор", "Управляет пользователями, ролями, конфигурациями ферм")
 System_Ext(mobile, "Мобильное приложение", "Показывает метрики, получает уведомления")
 
 System_Boundary(edge_system, "Edge-система на ферме") {
@@ -23,6 +24,7 @@ System_Boundary(cloud_system, "Облачный backend") {
 }
 
 operator --> local_alerting
+admin --> auth_service : Управление пользователями,\nролями, конфигурациями ферм
 mobile --> api_gateway
 
 video_processor --> device_control : Управление кормушками при драках
@@ -39,8 +41,10 @@ api_gateway --> notification
 api_gateway --> analytics
 api_gateway --> storage
 
+queuing --> device_control : Выполнение удалённых команд
+
 note right of queuing
-  Работает автономно при\nпотере связи.\нБуферизует события локально.
+  Работает автономно при\n  потере связи.\n  Буферизует события локально.
 end note
 
 @enduml

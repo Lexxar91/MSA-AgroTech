@@ -15,6 +15,11 @@ class AggressionAnalyzer {
   + analyze(detections: List[Detection]) -> Event
 }
 
+class HeadcountCounter {
+  - tracker: MultiObjectTracker
+  + recount(detections: List[Detection]) -> HeadcountEvent
+}
+
 class EventEmitter {
   + emit(event: Event)
 }
@@ -73,10 +78,15 @@ class HTTPClient {
   + send_to_cloud(data: List[Event])
 }
 
+class CloudBackend <<external>> {
+}
+
 ' Зависимости
 VideoIngestor --> PigDetector
 PigDetector --> AggressionAnalyzer
+PigDetector --> HeadcountCounter : Трекинг особей
 AggressionAnalyzer --> EventEmitter
+HeadcountCounter --> EventEmitter : Событие пересчёта поголовья
 
 ' Мгновенный алерт напрямую, запись в БД — асинхронно
 EventEmitter --> AlertRouter : Мгновенный алерт (синхронно)
@@ -96,6 +106,6 @@ AlertRouter --> SoundLightAlert
 
 SyncScheduler --> DBReader : Чтение пачки событий
 SyncScheduler --> HTTPClient
-HTTPClient --> [cloud_backend]
+HTTPClient --> CloudBackend
 
 @enduml

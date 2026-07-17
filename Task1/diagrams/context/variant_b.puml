@@ -24,10 +24,13 @@ edge_agent --> sensors_feeders
 edge_agent --> sms_gateway
 
 System_Ext(cloud_backend, "Облачный backend", "Аналитика, отчёты, SaaS-модель")
-cloud_backend .> edge_agent : Синхронизация\n(раз в 10 минут)
++ edge_agent ..> cloud_backend : Синхронизация (HTTP POST)\n(раз в 10 минут)
 
 note right of edge_agent
-  Работает полностью автономно.\nОблако используется только для\nаналитики и отчётов.\nНет реального времени.
+  + Работает полностью автономно.
+  + Облако используется только для
+  + аналитики и отчётов.
+  + Нет реального времени.
 end note
 
 @enduml

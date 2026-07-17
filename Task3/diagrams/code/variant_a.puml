@@ -15,6 +15,11 @@ class AggressionAnalyzer {
   + analyze(detections: List[Detection]) -> Event
 }
 
+class HeadcountCounter {
+  - tracker: MultiObjectTracker
+  + recount(detections: List[Detection]) -> HeadcountEvent
+}
+
 class EventEmitter {
   + emit(event: Event)
 }
@@ -81,7 +86,9 @@ class EventCollector {
 ' Зависимости
 VideoIngestor --> PigDetector
 PigDetector --> AggressionAnalyzer
+PigDetector --> HeadcountCounter : Трекинг особей
 AggressionAnalyzer --> EventEmitter
+HeadcountCounter --> EventEmitter : Событие пересчёта поголовья
 
 ' Локальные алерты идут напрямую, минуя очередь в облако
 EventEmitter --> AlertRouter : Локальный алерт (мгновенно)
