@@ -81,14 +81,12 @@ class HTTPClient {
 class CloudBackend <<external>> {
 }
 
-' Зависимости
 VideoIngestor --> PigDetector
 PigDetector --> AggressionAnalyzer
 PigDetector --> HeadcountCounter : Трекинг особей
 AggressionAnalyzer --> EventEmitter
 HeadcountCounter --> EventEmitter : Событие пересчёта поголовья
 
-' Мгновенный алерт напрямую, запись в БД — асинхронно
 EventEmitter --> AlertRouter : Мгновенный алерт (синхронно)
 EventEmitter --> DBWriter : Асинхронная запись в БД
 

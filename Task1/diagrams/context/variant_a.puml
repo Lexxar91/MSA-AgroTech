@@ -27,7 +27,7 @@ cloud_backend --> sms_gateway
 
 note right of edge_agent
      Работает автономно при
-     потере связи.
+     потере связи
      Буферизует события.
 end note
 
