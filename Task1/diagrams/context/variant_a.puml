@@ -26,9 +26,9 @@ edge_agent --> cloud_backend : Асинхронные события\n(чере�
 cloud_backend --> sms_gateway
 
 note right of edge_agent
-  +  Работает автономно при
-  +  потере связи.
-  +  Буферизует события.
+     Работает автономно при
+     потере связи.
+     Буферизует события.
 end note
 
 @enduml

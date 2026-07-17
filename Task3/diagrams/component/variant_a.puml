@@ -35,8 +35,7 @@ Container_Boundary(queuing, "Буферизация и отправка") {
 ' Внутренние связи
 video_ingestor --> pig_detector
 pig_detector --> aggression_analyzer
-pig_detector --> headcount_counter : Трекинг особей
-для пересчёта
+pig_detector --> headcount_counter : Трекинг особей\nдля пересчёта
 aggression_analyzer --> event_emitter
 headcount_counter --> event_emitter : Событие «поголовье пересчитано»
 
