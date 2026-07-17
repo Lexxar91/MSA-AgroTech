@@ -16,8 +16,9 @@ System_Boundary(edge_system, "Edge-система на ферме") {
 System_Boundary(cloud_system, "Облачный backend") {
   Container(cloud_mq, "Облачный брокер очередей", "Прием событий со всех ферм", "RabbitMQ")
   Container(api_gateway, "API Gateway", "Входные точки, REST API", "Python, FastAPI")
+  Container(auth_service, "Auth Service", "Аутентификация и RBAC", "Keycloak")
   Container(notification, "Сервис уведомлений", "SMS/Email шлюз", "Python, Twilio")
-  Container(analytics, "Сервис аналитики", "Агрегация данных", "Python, Prometheus")
+  Container(analytics, "Сервис аналитики", "Агрегация данных и прогнозирование расхода", "Python, Prometheus")
   Container(storage, "Хранилище данных", "S3-совместимое", "MinIO")
 }
 
@@ -28,14 +29,18 @@ video_processor --> device_control : Управление кормушками �
 video_processor --> local_alerting : Алерт о событии
 device_control --> queuing : Событие «кормушка заполнена»
 local_alerting --> queuing : Алерт «требуется вмешательство»
+
 queuing --> cloud_mq : Асинхронная отправка\n(AMQP over SSL/VPN)
+cloud_mq --> queuing : Команды управления\n(AMQP, farm.{id}.commands)
 cloud_mq --> api_gateway : Обработка событий
+
+api_gateway --> auth_service : Валидация JWT/токенов
 api_gateway --> notification
 api_gateway --> analytics
 api_gateway --> storage
 
 note right of queuing
-  Работает автономно при\nпотере связи.\nБуферизует события локально.
+  Работает автономно при\nпотере связи.\нБуферизует события локально.
 end note
 
 @enduml

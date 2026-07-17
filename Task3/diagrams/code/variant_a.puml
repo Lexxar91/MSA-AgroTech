@@ -49,6 +49,7 @@ class AlertRouter {
 }
 
 class SMSNotifier {
+  ' Требует интернет-соединения
   + send_sms(message: str)
 }
 
@@ -81,20 +82,28 @@ class EventCollector {
 VideoIngestor --> PigDetector
 PigDetector --> AggressionAnalyzer
 AggressionAnalyzer --> EventEmitter
-EventEmitter --> EventCollector
+
+' Локальные алерты идут напрямую, минуя очередь в облако
+EventEmitter --> AlertRouter : Локальный алерт (мгновенно)
+EventEmitter --> EventCollector : События для облака
 
 FeederVendorAAdapter ..|> DeviceAdapter
 FeederVendorBAdapter ..|> DeviceAdapter
 CommandExecutor --> DeviceAdapter
 CommandExecutor --> StatusMonitor
 StatusMonitor --> EventPublisher
-EventPublisher --> EventCollector
+
+EventPublisher --> AlertRouter : Локальный алерт (мгновенно)
+EventPublisher --> EventCollector : События для облака
 
 EventCollector --> QueueManager
 QueueManager --> RetryHandler
 RetryHandler --> DLQProcessor
+
+' Подписчик нужен только для приема команд ИЗ облака (например, удаленный запуск кормушки)
 EventSubscriber --> QueueManager
-EventSubscriber --> AlertRouter
+EventSubscriber --> CommandExecutor : Удаленные команды
+
 AlertRouter --> SMSNotifier
 AlertRouter --> SoundLightAlert
 

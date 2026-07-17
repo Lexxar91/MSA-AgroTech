@@ -77,19 +77,24 @@ class HTTPClient {
 VideoIngestor --> PigDetector
 PigDetector --> AggressionAnalyzer
 AggressionAnalyzer --> EventEmitter
-EventEmitter --> DBWriter
+
+' Мгновенный алерт напрямую, запись в БД — асинхронно
+EventEmitter --> AlertRouter : Мгновенный алерт (синхронно)
+EventEmitter --> DBWriter : Асинхронная запись в БД
 
 FeederVendorAAdapter ..|> DeviceAdapter
 FeederVendorBAdapter ..|> DeviceAdapter
 CommandExecutor --> DeviceAdapter
 CommandExecutor --> StatusMonitor
 StatusMonitor --> EventPublisher
-EventPublisher --> DBWriter
 
-DBReader --> AlertRouter
+EventPublisher --> AlertRouter : Мгновенный алерт
+EventPublisher --> DBWriter : Асинхронная запись в БД
+
 AlertRouter --> SMSNotifier
 AlertRouter --> SoundLightAlert
 
+SyncScheduler --> DBReader : Чтение пачки событий
 SyncScheduler --> HTTPClient
 HTTPClient --> [cloud_backend]
 

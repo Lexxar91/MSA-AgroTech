@@ -11,7 +11,7 @@ Container_Boundary(video_processor, "Видеоаналитика") {
 }
 
 Container_Boundary(device_control, "Управление устройствами") {
-  Component(device_adapter, "DeviceAdapter", "Адаптеры для производителей", "Python")
+  Component(device_adapter, "DeviceAdapter", "Инкапсулирует MQTT/Modbus", "Python")
   Component(command_executor, "CommandExecutor", "Выполнение команд", "Python")
   Component(status_monitor, "StatusMonitor", "Мониторинг состояния", "Python")
   Component(event_publisher, "EventPublisher", "Публикация событий", "Python")
@@ -19,32 +19,42 @@ Container_Boundary(device_control, "Управление устройствам�
 
 Container_Boundary(local_alerting, "Локальный алертинг") {
   Component(alert_router, "AlertRouter", "Маршрутизация алертов", "Python")
-  Component(sms_notifier, "SMSNotifier", "Отправка SMS", "Python, Twilio")
+  Component(sms_notifier, "SMSNotifier", "Отправка SMS (при наличии интернета)", "Python, Twilio")
   Component(sound_light, "SoundLightAlert", "Звук/свет на ферме", "Python")
-  Component(event_subscriber, "EventSubscriber", "Подписка на события", "Python")
+  Component(event_subscriber, "EventSubscriber", "Подписка на команды", "Python")
 }
 
 Container_Boundary(queuing, "Буферизация и отправка") {
   Component(queue_manager, "QueueManager", "Управление очередью", "Python, Pika")
   Component(retry_handler, "RetryHandler", "Повторная отправка", "Python")
   Component(dlq_processor, "DLQProcessor", "Обработка ошибок", "Python")
-  Component(event_collector, "EventCollector", "Сбор событий", "Python")
+  Component(event_collector, "EventCollector", "Сбор событий для облака", "Python")
 }
 
 ' Внутренние связи
 video_ingestor --> pig_detector
 pig_detector --> aggression_analyzer
 aggression_analyzer --> event_emitter
-event_emitter --> event_collector
 
-device_adapter --> command_executor
+' Локальные алерты идут напрямую, минуя очередь
+event_emitter --> alert_router : gRPC (Локальный алерт)
+event_emitter --> event_collector : События для облака
+
+device_adapter --> command_executor : MQTT (Связь с железом)
 command_executor --> status_monitor
 status_monitor --> event_publisher
-event_publisher --> event_collector
+
+event_publisher --> alert_router : gRPC (Локальный алерт)
+event_publisher --> event_collector : События для облака
 
 event_collector --> queue_manager
+queue_manager --> retry_handler
+retry_handler --> dlq_processor
+
+' Подписчик нужен только для приема команд ИЗ облака
 event_subscriber --> queue_manager
-event_subscriber --> alert_router
+event_subscriber --> command_executor : Удаленные команды
+
 alert_router --> sms_notifier
 alert_router --> sound_light
 

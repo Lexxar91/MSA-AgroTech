@@ -21,11 +21,11 @@ Container_Boundary(local_alerting, "Локальный алертинг") {
   Component(alert_router, "AlertRouter", "Маршрутизация алертов", "Python")
   Component(sms_notifier, "SMSNotifier", "Отправка SMS", "Python, Twilio")
   Component(sound_light, "SoundLightAlert", "Звук/свет на ферме", "Python")
-  Component(db_reader, "DBReader", "Чтение событий из БД", "Python")
 }
 
 Container_Boundary(local_storage, "Локальное хранилище") {
   Component(db_writer, "DBWriter", "Запись событий", "Python, SQLite")
+  Component(db_reader, "DBReader", "Чтение событий из БД", "Python")
   Component(sync_scheduler, "SyncScheduler", "Планировщик синхронизации", "Python")
   Component(http_client, "HTTPClient", "Отправка в облако", "Python")
 }
@@ -34,17 +34,22 @@ Container_Boundary(local_storage, "Локальное хранилище") {
 video_ingestor --> pig_detector
 pig_detector --> aggression_analyzer
 aggression_analyzer --> event_emitter
-event_emitter --> db_writer
+
+' Мгновенный алерт напрямую, запись в БД — асинхронно
+event_emitter --> alert_router : Мгновенный алерт (синхронно)
+event_emitter --> db_writer : Асинхронная запись в БД
 
 device_adapter --> command_executor
 command_executor --> status_monitor
 status_monitor --> event_publisher
-event_publisher --> db_writer
 
-db_reader --> alert_router
+event_publisher --> alert_router : Мгновенный алерт
+event_publisher --> db_writer : Асинхронная запись в БД
+
 alert_router --> sms_notifier
 alert_router --> sound_light
 
+sync_scheduler --> db_reader : Чтение пачки событий
 sync_scheduler --> http_client
 http_client --> [cloud_backend] : HTTP POST\n(раз в 10 мин)
 
